@@ -21,6 +21,7 @@ class User extends Authenticatable
         'date_of_birth',
         'is_seller',
         'is_verified',
+        'role_id',
     ];
 
     protected $hidden = [
@@ -36,8 +37,57 @@ class User extends Authenticatable
     ];
 
     // Relationships
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
+    }
+
     public function products()
     {
         return $this->hasMany(Product::class);
+    }
+
+    public function vendorProfile()
+    {
+        return $this->hasOne(VendorProfile::class);
+    }
+
+    // Role helper methods
+    public function isAdmin()
+    {
+        return $this->role && $this->role->name === Role::ADMIN;
+    }
+
+    public function isVendor()
+    {
+        return $this->role && $this->role->name === Role::VENDOR;
+    }
+
+    public function isCustomer()
+    {
+        return $this->role && $this->role->name === Role::CUSTOMER;
+    }
+
+    public function hasRole($role)
+    {
+        return $this->role && $this->role->name === $role;
+    }
+
+    // Scopes
+    public function scopeByRole($query, $roleName)
+    {
+        return $query->whereHas('role', function($q) use ($roleName) {
+            $q->where('name', $roleName);
+        });
+    }
+
+    public function scopeVendors($query)
+    {
+        return $query->byRole(Role::VENDOR);
+    }
+
+    public function scopeCustomers($query)
+    {
+        return $query->byRole(Role::CUSTOMER);
     }
 }

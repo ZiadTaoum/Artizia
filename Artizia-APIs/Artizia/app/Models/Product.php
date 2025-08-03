@@ -59,9 +59,24 @@ class Product extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function vendor()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
     public function category()
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function images()
+    {
+        return $this->hasMany(ProductImage::class)->ordered();
+    }
+
+    public function primaryImage()
+    {
+        return $this->hasOne(ProductImage::class)->where('is_primary', true);
     }
 
     // Scopes
@@ -73,5 +88,30 @@ class Product extends Model
     public function scopeFeatured($query)
     {
         return $query->where('is_featured', true);
+    }
+
+    public function scopeInStock($query)
+    {
+        return $query->where('inventory_quantity', '>', 0);
+    }
+
+    // Helper methods
+    public function isInStock()
+    {
+        return $this->inventory_quantity > 0;
+    }
+
+    public function hasDiscount()
+    {
+        return $this->compare_price && $this->compare_price > $this->price;
+    }
+
+    public function getDiscountPercentage()
+    {
+        if (!$this->hasDiscount()) {
+            return 0;
+        }
+
+        return round((($this->compare_price - $this->price) / $this->compare_price) * 100, 2);
     }
 }
